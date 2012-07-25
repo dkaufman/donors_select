@@ -15,14 +15,14 @@ class Project
 
   def self.find_by(params)
     uri = build_uri(params)
-    if projects = redis.get(uri)
+    if projects = fetch_from(uri)
       JSON.parse projects
     end
   end
 
   def self.fetch_and_publish(params, user_token=nil)
     uri = build_uri(params)
-    Resque.enqueue Fetcher, uri, user_token
+    queue_job(uri, user_token)
   end
 
   def self.build_uri(params=nil)
@@ -33,4 +33,11 @@ class Project
     end
   end
 
+  def self.queue_job(uri, token)
+    Resque.enqueue Fetcher, uri, token
+  end
+
+  def self.fetch_from(uri)
+    redis.get(uri)
+  end
 end
